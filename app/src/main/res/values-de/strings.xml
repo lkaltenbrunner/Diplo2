@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="GoogleMaps_Application_Name">Google Maps</string>
+    <string name="Profile_Application_Name">Benutzerprofil</string>
+    <string name="Settings_Application_Name">Einstellungen</string>
+    <string name="Weather_Application_Name">Wetter</string>
+    <string name="action_settings">Einstellungen</string>
+    <string name="app_name"></string>
+</resources>
