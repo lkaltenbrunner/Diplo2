@@ -8,22 +8,100 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+
     tools:context="com.example.kalti.diplo.WeatherActivity">
 
     <TextView
-        android:text="TextView"
+        android:text="CityName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
+        android:textSize="35dp"
+        android:textStyle="bold"
         android:id="@+id/placeTextView" />
 
+    <ImageView
+        android:id="@+id/weathericon"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="30dp"
+        android:layout_below="@+id/placeTextView"
+        android:background="#fff"
+
+        />
+
     <TextView
-        android:text="TextView"
+        android:text="default C°"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/placeTextView"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="53dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:textSize="35dp"
         android:id="@+id/tempTextView" />
+
+    <TextView
+        android:id="@+id/cloudTextView"
+        android:text="Cloud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/weathericon"
+        android:textSize="25dp"
+        android:layout_marginTop="10dp"
+
+        />
+
+    <TextView
+        android:id="@+id/pressureTextView"
+        android:text="Pressure"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/cloudTextView"
+        android:textSize="25dp"
+        android:layout_marginTop="10dp"
+
+        />
+    <TextView
+        android:id="@+id/windTextView"
+        android:text="Wind"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/pressureTextView"
+        android:textSize="25dp"
+        android:layout_marginTop="10dp"
+
+        />
+    <TextView
+        android:id="@+id/humidityTextView"
+        android:text="Humidity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/windTextView"
+        android:textSize="25dp"
+        android:layout_marginTop="10dp"
+
+        />
+    <TextView
+        android:id="@+id/sunriseTextView"
+        android:text="Sunrise"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/humidityTextView"
+        android:textSize="25dp"
+        android:layout_marginTop="10dp"
+
+        />
+
+    <TextView
+        android:id="@+id/sunsetTextView"
+        android:text="Sunset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/sunriseTextView"
+        android:textSize="25dp"
+        android:layout_marginTop="10dp"
+
+        />
+
 </RelativeLayout>

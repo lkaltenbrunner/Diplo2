@@ -64,6 +64,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -79,7 +80,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
+public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener,  GoogleMap.OnMarkerClickListener,
+        GoogleMap.OnMarkerDragListener {
 
     private static final String TAG = "MapActivity";
     //Google-map permissions
@@ -107,6 +109,13 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
     private static final int PLACE_PICKER_REQUEST = 1;
     private PlaceInformation mPlace;
     private Marker mMarker;
+    private Marker destinationMarker;
+    private MarkerOptions markerOptionsDestination;
+    private Marker currentLocationMarker;
+    double latitude, longitude;
+    private LatLng latLngdestination;
+    double end_latitude, end_longitude;
+    private boolean inputState = true;
 
 
 
@@ -115,6 +124,9 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
     private ImageView mGps;
     private ImageView mplacePicker;
     private ImageView mInfo;
+    private ImageView mDistance;
+
+
 
 
 
@@ -125,6 +137,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         setContentView(R.layout.activity_google_maps);
 
 
+        mDistance = (ImageView) findViewById(R.id.distance);
         mInfo = (ImageView) findViewById(R.id.place_info);
         mplacePicker = (ImageView) findViewById(R.id.placePicker);
         editTextSearch = (AutoCompleteTextView) findViewById(R.id.mapSearchText);
@@ -207,7 +220,74 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
             }
         });
 
+        mDistance.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                //Destination();
+
+                noti();
+                if(markerOptionsDestination != null){
+                    calculateDistance();
+                }
+            }
+        });
+
+
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng point) {
+/*
+                if(inputState == true){
+                    if(destinationMarker != null){
+                        destinationMarker.remove();
+                    }
+
+                    if(end_longitude != 0 && end_longitude != 0){
+
+
+                    latLngdestination = new LatLng(end_latitude,end_longitude);
+                    markerOptionsDestination.position(latLngdestination);
+                    markerOptionsDestination.title("Selected destination");
+                    destinationMarker = mMap.addMarker(markerOptionsDestination);
+                    inputState = false;
+                    }
+                }
+
+*/
+
+                if(markerOptionsDestination != null){
+                    destinationMarker.remove();
+                }
+                end_longitude = point.longitude;
+                end_latitude = point.latitude;
+                markerOptionsDestination = new MarkerOptions().position(
+                        new LatLng(end_latitude,end_longitude)).title("Selected Destination");
+
+                destinationMarker = mMap.addMarker(markerOptionsDestination);
+            }
+        });
+
+
         hideKeyboard();
+    }
+    private void noti(){
+        if(markerOptionsDestination == null){
+            Toast.makeText(this, "Select Destination",Toast.LENGTH_SHORT).show();
+
+        }
+    }
+
+    private void calculateDistance(){
+
+
+        float results[] = new float[20];
+
+        Location.distanceBetween(latitude,longitude,end_latitude,end_longitude,results);
+        //markerOptionsDestination.snippet("Distance =" +results[0] + " m");
+        Toast.makeText(this, String.valueOf("Distance = " + results[0] + " m"),Toast.LENGTH_LONG).show();
+
+
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -222,6 +302,19 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
             }
         }
+    }
+
+    private void Destination(){
+        mMap.clear();
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(new LatLng(end_latitude,end_longitude));
+        markerOptions.title("Destination");
+
+        float results[] = new float[20];
+        Location.distanceBetween(latitude,longitude,end_latitude,end_longitude,results);
+        markerOptions.snippet("Distance = " + results[0]);
+        mMap.addMarker(markerOptions);
+
     }
 
     @Override
@@ -262,12 +355,16 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 //Aktuelle Position auf der Karte finden => beim start der App
     public void getLocation() {
 
+        if(currentLocationMarker != null){
+            currentLocationMarker.remove();
+
+        }
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         try {
             if (mLocationPermissionsGranted) {
 
-                Task location = fusedLocationProviderClient.getLastLocation();
+                final Task location = fusedLocationProviderClient.getLastLocation();
 
                 location.addOnCompleteListener(new OnCompleteListener() {
                     @Override
@@ -276,7 +373,21 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
                         Location clocation = (Location) task.getResult();
 
                         try{
-                            moveCamera(new LatLng(clocation.getLatitude(), clocation.getLongitude()), DEFAULT_ZOOM, "Current Location");
+                            latitude = clocation.getLatitude();
+                            longitude = clocation.getLongitude();
+                            /*
+                            LatLng latlngclocation = new LatLng(clocation.getLatitude(), clocation.getLongitude());
+                            MarkerOptions markerOptions = new MarkerOptions();
+                            markerOptions.position(latlngclocation);
+                            markerOptions.title("Current Place");
+                            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                            currentLocationMarker = mMap.addMarker(markerOptions);
+                            */
+                            moveCamera(new LatLng(clocation.getLatitude(), clocation.getLongitude()), DEFAULT_ZOOM, "Current Place");
+
+
+
+
                         }catch (NullPointerException e){
                             Log.e(TAG, "onComplete: NullPointerException: " +e.getMessage() );
                         }
@@ -296,7 +407,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         Log.d(TAG, "moveCamera: moving camera to: lat: " + latLng.latitude + "; lng: " + latLng.longitude);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 
-        if(!title.equals("Current Location")){
+        if(!title.equals("Current Place")){
             MarkerOptions markerOptions = new MarkerOptions().position(latLng).title(title);
             mMap.addMarker(markerOptions);
         }
@@ -414,6 +525,9 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
             }
             mMap.setMyLocationEnabled(true);
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
+            //mMap.setOnMarkerDragListener(this);
+            //mMap.setOnMarkerClickListener(this);
+
             initialize();
 
         }
@@ -471,7 +585,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
     }
     }
-
+//Plätze in der Umgebung
     private AdapterView.OnItemClickListener AutocompleteClickListener = new AdapterView.OnItemClickListener(){
 
         @Override
@@ -518,4 +632,27 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
         }
     };
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        currentLocationMarker.setDraggable(true);
+        return false;
+    }
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+
+        end_latitude = currentLocationMarker.getPosition().latitude;
+        end_longitude = currentLocationMarker.getPosition().longitude;
+    }
 }
