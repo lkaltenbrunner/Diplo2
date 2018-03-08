@@ -1,0 +1,175 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.kalti.diplo.WeatherFragments.WeatherFragment">
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:text="Location Name"
+            android:paddingLeft="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"
+            android:textSize="35sp"
+            android:textStyle="bold"
+            android:id="@+id/placeTextView" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_below="@+id/placeTextView"
+            android:layout_height="5dp"
+            android:background="@android:color/darker_gray"/>
+
+        <ImageView
+            android:id="@+id/weathericon"
+            android:layout_marginLeft="20dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginTop="30dp"
+            android:layout_below="@+id/placeTextView"
+            android:background="#fff"
+
+            />
+
+        <TextView
+            android:text="default C°"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/placeTextView"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="50dp"
+            android:textSize="35sp"
+            android:id="@+id/tempTextView" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_below="@+id/weathericon"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/cloudTextView"
+            android:paddingLeft="20dp"
+            android:text="Condition"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/weathericon"
+            android:textSize="25sp"
+            android:layout_marginTop="10dp"
+            />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_below="@+id/cloudTextView"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/pressureTextView"
+            android:paddingLeft="20dp"
+            android:text="Pressure"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/cloudTextView"
+            android:textSize="25sp"
+            android:layout_marginTop="10dp"
+            />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_below="@+id/pressureTextView"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
+        <TextView
+            android:id="@+id/windTextView"
+            android:paddingLeft="20dp"
+            android:text="Wind"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/pressureTextView"
+            android:textSize="25sp"
+            android:layout_marginTop="10dp"
+
+            />
+        <View
+            android:layout_width="match_parent"
+            android:layout_below="@+id/windTextView"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/humidityTextView"
+            android:paddingLeft="20dp"
+            android:text="Humidity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/windTextView"
+            android:textSize="25sp"
+            android:layout_marginTop="10dp"
+
+            />
+        <View
+            android:layout_width="match_parent"
+            android:layout_below="@+id/humidityTextView"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
+        <TextView
+            android:id="@+id/sunriseTextView"
+            android:paddingLeft="20dp"
+            android:text="Sunrise"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/humidityTextView"
+            android:textSize="25sp"
+            android:layout_marginTop="10dp"
+
+            />
+        <View
+            android:layout_width="match_parent"
+            android:layout_below="@+id/sunriseTextView"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
+
+
+        <TextView
+            android:id="@+id/sunsetTextView"
+            android:paddingLeft="20dp"
+            android:text="Sunset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/sunriseTextView"
+            android:textSize="25sp"
+            android:layout_marginTop="10dp"
+
+            />
+        <View
+            android:layout_width="match_parent"
+            android:layout_below="@+id/sunsetTextView"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
+        <TextView
+            android:id="@+id/lastupdateView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/sunsetTextView"
+            android:paddingLeft="20dp"
+            android:layout_marginTop="10dp"
+            android:textSize="25sp"
+            android:text="Last update"/>
+
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_below="@+id/lastupdateView"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
+    </RelativeLayout>
+
+
+
+</FrameLayout>

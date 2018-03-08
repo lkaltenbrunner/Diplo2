@@ -17,48 +17,165 @@ public class JSONWeatherParser {
         Weather weather = new Weather();
 
         try {
+
             JSONObject jsonObject = new JSONObject(data);
 
-            //init JSON-Data
-            Place place = new Place();
+            if(jsonObject!=null) {
+                //init JSON-Data
+                Place place = new Place();
 
-            JSONObject coordObj = WeatherForecastRequest.getObject("coord",jsonObject);
-            place.setLon(WeatherForecastRequest.getFloat("lon", coordObj));
-            place.setLat(WeatherForecastRequest.getFloat("lat", coordObj));
-            weather.place = place;
+                JSONObject coordObj = WeatherRequest.getObject("coord", jsonObject);
+                place.setLon(WeatherRequest.getFloat("lon", coordObj));
+                place.setLat(WeatherRequest.getFloat("lat", coordObj));
+                weather.place = place;
 
-            JSONObject sysObj = WeatherForecastRequest.getObject("sys",jsonObject);
-            place.setCountry(WeatherForecastRequest.getString("country",sysObj));
-            place.setLastupdate(WeatherForecastRequest.getInt("dt",jsonObject));
-            place.setSunrise(WeatherForecastRequest.getInt("sunrise",sysObj));
-            place.setSunset(WeatherForecastRequest.getInt("sunset",sysObj));
-            place.setCity(WeatherForecastRequest.getString("name",jsonObject));
+                JSONObject sysObj = WeatherRequest.getObject("sys", jsonObject);
 
-            JSONArray jsonArray = jsonObject.getJSONArray("weather");
-            JSONObject jsonWeatherObject = jsonArray.getJSONObject(0);
-            weather.currentCondition.setWeatherId(WeatherForecastRequest.getInt("id",jsonWeatherObject));
-            weather.currentCondition.setDescription(WeatherForecastRequest.getString("description",jsonWeatherObject));
-            weather.currentCondition.setCondition(WeatherForecastRequest.getString("main",jsonWeatherObject));
-            weather.currentCondition.setIcon(WeatherForecastRequest.getString("icon",jsonWeatherObject));
+                if (sysObj.isNull("country"))
+                {
+                    place.setCountry("?");
+                }else{
 
-            JSONObject mainObj = WeatherForecastRequest.getObject("main", jsonObject);
-            weather.currentCondition.setHumidity(WeatherForecastRequest.getInt("humidity", mainObj));
-            weather.currentCondition.setPressure(WeatherForecastRequest.getInt("pressure", mainObj));
-            weather.currentCondition.setMinTemp(WeatherForecastRequest.getFloat("temp_min", mainObj));
-            weather.currentCondition.setMaxTemp(WeatherForecastRequest.getFloat("temp_max", mainObj));
-            weather.currentCondition.setTemperature(WeatherForecastRequest.getDouble("temp", mainObj));
-
-            JSONObject windObj = WeatherForecastRequest.getObject("wind",jsonObject);
-            weather.wind.setSpeed(WeatherForecastRequest.getFloat("speed",windObj));
-            weather.wind.setDeg(WeatherForecastRequest.getFloat("deg",windObj));
-
-            JSONObject cloudObj = WeatherForecastRequest.getObject("clouds",jsonObject);
-            weather.clouds.setPrecipitation(WeatherForecastRequest.getInt("all",cloudObj));
+                    place.setCountry(WeatherRequest.getString("country", sysObj));
+                }
 
 
 
-            return weather;
+                if (jsonObject.isNull("name")||WeatherRequest.getString("name",jsonObject).equals("")){
 
+                    place.setCity("Unknown");
+
+                }else{
+
+                    place.setCity(WeatherRequest.getString("name", jsonObject));
+
+                }
+
+
+
+
+
+                if (jsonObject.isNull("dt")){
+                    place.setLastupdate(0);
+                }else{
+                    place.setLastupdate(WeatherRequest.getInt("dt", jsonObject));
+                }
+
+
+
+                if (sysObj.isNull("sunrise")){
+
+                    place.setSunrise(0);
+                }else{
+                    place.setSunrise(WeatherRequest.getInt("sunrise", sysObj));
+                }
+
+
+                if (sysObj.isNull("sunset")){
+
+                    place.setSunset(0);
+                }else{
+                    place.setSunset(WeatherRequest.getInt("sunset", sysObj));
+                }
+
+
+
+                JSONArray jsonArray = jsonObject.getJSONArray("weather");
+                JSONObject jsonWeatherObject = jsonArray.getJSONObject(0);
+
+                if (jsonWeatherObject.isNull("id")){
+                    weather.currentCondition.setWeatherId(0);
+                }else{
+                    weather.currentCondition.setWeatherId(WeatherRequest.getInt("id", jsonWeatherObject));
+                }
+
+                if (jsonWeatherObject.isNull("description")||WeatherRequest.getString("description",jsonWeatherObject).equals("")){
+                }else{
+                    weather.currentCondition.setDescription(WeatherRequest.getString("description", jsonWeatherObject));
+                }
+
+                if (jsonWeatherObject.isNull("main")||WeatherRequest.getString("main",jsonWeatherObject).equals("")){
+                    weather.currentCondition.setCondition("");
+                }else{
+                    weather.currentCondition.setCondition(WeatherRequest.getString("main", jsonWeatherObject));
+                }
+
+                if (jsonWeatherObject.isNull("icon")||WeatherRequest.getString("icon",jsonWeatherObject).equals("")){
+                    weather.currentCondition.setIcon("");
+                }else{
+                    weather.currentCondition.setIcon(WeatherRequest.getString("icon", jsonWeatherObject));
+                }
+
+
+
+
+
+                JSONObject mainObj = WeatherRequest.getObject("main", jsonObject);
+                if (mainObj.isNull("humidity")){
+                    weather.currentCondition.setHumidity(0);
+                }else{
+                    weather.currentCondition.setHumidity(WeatherRequest.getInt("humidity", mainObj));
+                }
+
+                if (mainObj.isNull("pressure")){
+                    weather.currentCondition.setPressure(0);
+                }else{
+                    weather.currentCondition.setPressure(WeatherRequest.getInt("pressure", mainObj));
+                }
+
+                if (mainObj.isNull("temp_min")){
+                    weather.currentCondition.setMinTemp(0);
+                }else{
+                    weather.currentCondition.setMinTemp(WeatherRequest.getFloat("temp_min", mainObj));
+                }
+                if (mainObj.isNull("temp_max")){
+                    weather.currentCondition.setMaxTemp(0);
+                }else{
+                    weather.currentCondition.setMaxTemp(WeatherRequest.getFloat("temp_max", mainObj));
+                }
+
+                if (mainObj.isNull("sunset")){
+                    weather.currentCondition.setMaxTemp(0);
+                }else{
+                    weather.currentCondition.setMaxTemp(WeatherRequest.getFloat("temp_max", mainObj));
+                }
+
+                if (mainObj.isNull("temp")){
+                    weather.currentCondition.setTemperature(0);
+                }else{
+                    weather.currentCondition.setTemperature(WeatherRequest.getDouble("temp", mainObj));
+                }
+
+
+
+                JSONObject windObj = WeatherRequest.getObject("wind", jsonObject);
+                if (windObj.isNull("speed")){
+                    weather.wind.setSpeed(0);
+                }else{
+                    weather.wind.setSpeed(WeatherRequest.getFloat("speed", windObj));
+                }
+
+                if (windObj.isNull("deg")){
+                    weather.wind.setDeg(0);
+                }else{
+                    weather.wind.setDeg(WeatherRequest.getFloat("deg", windObj));
+                }
+
+
+
+                JSONObject cloudObj = WeatherRequest.getObject("clouds", jsonObject);
+                if (cloudObj.isNull("all")){
+                    weather.clouds.setPrecipitation(0);
+                }else{
+                    weather.clouds.setPrecipitation(WeatherRequest.getInt("all", cloudObj));
+                }
+
+
+
+                return weather;
+            }else{
+
+            }
 
 
         } catch (JSONException e) {

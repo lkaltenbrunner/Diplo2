@@ -3,56 +3,127 @@ package com.example.kalti.diplo;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.os.Handler;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
-import android.widget.TextSwitcher;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ViewSwitcher;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-//import com.hitomi.cmlibrary.CircleMenu;
-//import com.hitomi.cmlibrary.OnMenuSelectedListener;
+import com.google.android.gms.identity.intents.Address;
+import com.google.android.gms.location.LocationListener;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
-import it.moondroid.coverflow.components.ui.containers.FeatureCoverFlow;
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LocationListener {
 
     private static final String TAG = "GoogleMapsActivity";
 
     private static final int ERROR_DIALOG_REQUEST = 9001;
+
+    private LocationManager locationManager;
+    double latitute;
+    double longitude;
+    Geocoder geocoder;
+    List<android.location.Address> addressList;
+    private TextView coordinates;
+    private TextView locationview;
+    private String city;
+    String coord;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+
+
+        locationview = (TextView)findViewById(R.id.location);
+        coordinates = (TextView)findViewById(R.id.coords);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        Location location = locationManager.getLastKnownLocation(locationManager.NETWORK_PROVIDER);
+        onLocationChanged(location);
+
+        coord = "lat=" +String.valueOf(location.getLatitude()) +"&lon="+String.valueOf(location.getLongitude());
+
+        geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            addressList = geocoder.getFromLocation(latitute,longitude,1);
+
+            city = addressList.get(0).getLocality();
+            locationview.setText(city);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         if(isServiceVersionOk()){
             init();
         }
 
     }
 
+    @Override
+    public void onLocationChanged(Location location) {
+
+        longitude = location.getLongitude();
+        latitute = location.getLatitude();
+        coordinates.setText("Longititude: " + longitude + "\n" + "Latitude: " + latitute);
+    }
+
 
     private void init(){
+        ImageView reloadweather = (ImageView) findViewById(R.id.reloadweatheract);
+        reloadweather.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                SharedPreferences sharedPreferences = getSharedPreferences(WeatherActivity.SHARED_PREFS,MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("coords",coord);
+                editor.putString("city",city);
+                editor.commit();
+
+               // Toast.makeText(MainActivity.this, cityReferences.getCity().toString(),Toast.LENGTH_SHORT).show();
+            }
+        });
         Button btnWeather = (Button) findViewById(R.id.btnWeather);
         btnWeather.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                SharedPreferences sharedPreferences = getSharedPreferences(WeatherActivity.SHARED_PREFS,MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                if(sharedPreferences.getString("coords","").equals("")){
+                    editor.putString("coords",coord);
+                }
+
+                editor.putString("city",city);
+                editor.commit();
                 sendMessageWeather();
             }
         });
@@ -70,60 +141,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-/*
-        //CircleMenu erstellen
-        CircleMenu circleMenu = (CircleMenu)findViewById(R.id.circle_menu);
-        //Mainmenu (Hauptmenu)
-        circleMenu.setMainMenu(Color.parseColor("#CDCDCD"),R.drawable.touchicon,R.drawable.deleteicon)
-                .addSubMenu(Color.parseColor("#E3D823"),R.drawable.profileicon)
-                .addSubMenu(Color.parseColor("#B11B16"),R.drawable.weathericon)
-                .addSubMenu(Color.parseColor("#005A20"),R.drawable.mapsicon)
-                .addSubMenu(Color.parseColor("#A1AB9F"),R.drawable.settingsicon)
-                .setOnMenuSelectedListener(new OnMenuSelectedListener() {
-                    @Override
-                    public void onMenuSelected(int i) {
-                        if(menuItems[i].equals("Profile")){
-                            new Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
 
-                                    sendMessageProfile();
-                                }
-                            }, 1000);
-                        }else if(menuItems[i].equals("Settings")){
-                            new Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    sendMessageSettings();
-                                }
-                            }, 1000);
-
-                        }else if(menuItems[i].equals("GoogleMaps")){
-                            new Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    if(isServiceVersionOk()){
-                                        sendMessageGoogleMaps();
-                                    }
-
-                                }
-                            }, 1000);
-
-                        }else if(menuItems[i].equals("Weather")){
-                            new Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    sendMessageWeather();
-                                }
-                            }, 1000);
-
-                        }
-                    }
-                });
-*/
 
 
     public void sendMessageSettings(){
@@ -167,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
+
 
 
 }

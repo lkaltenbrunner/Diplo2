@@ -1,4 +1,4 @@
-package com.example.kalti.diplo.Model_Classes;
+package com.example.kalti.diplo.Model_Classes.Forecast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,19 +8,17 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Created by Kalti on 11.02.2018.
+ * Created by Kalti on 22.02.2018.
  */
 
-public class WeatherHttpClient {
-    public String getWeatherData(String coords){
-
+public class WeatherForecastHttpClient {
+    public String getWeatherData(String coord){
         HttpURLConnection connection = null;
         String result = "";
         InputStream is = null;
         try {
-            //Connection mit openweathermap API- herstellen => Daten des derzeitigen Tages
-            URL url = new URL(WeatherRequest.BASE_URLCOORD + coords+WeatherRequest.API_KEY);
-            //URL url = new URL(WeatherRequest.BASE_URL + place);
+            //Connection mit openweathermap API- herstellen => forecast 5 Tage
+            URL url = new URL(WeatherForecastRequest.BASE_URL + coord + WeatherForecastRequest.API_KEY);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setDoInput(true);
