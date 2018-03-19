@@ -5,52 +5,50 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 
-import android.content.res.Resources;
+import android.graphics.Color;
 import android.location.Geocoder;
 import android.location.Address;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.PopupMenu;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.EditText;
 
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.kalti.diplo.GoogleMaps_Classes.ElevationData;
+import com.example.kalti.diplo.GoogleMaps_Classes.ElevationDataModel;
+import com.example.kalti.diplo.GoogleMaps_Classes.GoogleMapsData;
+import com.example.kalti.diplo.GoogleMaps_Classes.GoogleMapsDataParser;
+import com.example.kalti.diplo.GoogleMaps_Classes.GoogleMapsHttpClient;
 import com.example.kalti.diplo.Model_Classes.PlaceInformation;
-import com.google.android.gms.ads.formats.NativeAd;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.location.FusedLocationProviderApi;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 
@@ -64,25 +62,27 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-
+import com.google.maps.android.PolyUtil;
 
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
 public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener,  GoogleMap.OnMarkerClickListener,
         GoogleMap.OnMarkerDragListener {
-
+//region variables
     private static final String TAG = "MapActivity";
     //Google-map permissions
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -91,43 +91,78 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
     //Map Zoom
     private static final float DEFAULT_ZOOM = 15;
+
     //Constanten
     public static final String GEO_LOCATION = "geoLocation";
     private static final String SELECTED_STYLE = "selected_style";
 
-    //Variablen
+    //Variablen (GoogleMaps)
     private Boolean mLocationPermissionsGranted = false;
     private GoogleMap mMap;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private PlaceAutocompleteAdapter placeAutocompleteAdapter;
     private GoogleApiClient mGoogleApiClient;
     protected GeoDataClient mGeoDataClient;
+
+    //Map-init LatLng (full covered map)
     private static  final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(new LatLng(-40,-168), new LatLng(71,136));
-    private int mSelectedStyleId = R.string.style_label_default;
     public String layoutStyle = "Default";
     public MapStyleOptions style;
+
+    //Placepicker + Information
     private static final int PLACE_PICKER_REQUEST = 1;
     private PlaceInformation mPlace;
+
+    //Markers (Origin, Destination)
+    private Marker currentLocationMarker;
     private Marker mMarker;
     private Marker destinationMarker;
     private MarkerOptions markerOptionsDestination;
-    private Marker currentLocationMarker;
-    double latitude, longitude;
-    private LatLng latLngdestination;
-    double end_latitude, end_longitude;
-    private boolean inputState = true;
 
+    //lat, longs
+    double latitude, longitude;
+    double end_latitude, end_longitude;
+
+    //SharedPreferences
+    SharedPreferences preferences;
+    SharedPreferences.Editor editor;
+
+    //Calculation (Duration + Distance)
+    Button calcDuration;
+    Button calcHeight;
+    //lat, longs (destination, origin)
+    Double latitudeDestinationA, longitudeDestinationA;
+    Double latitudeDestinationB, longitudeDestinationB;
+
+    //Marker (destination, origin)
+    private MarkerOptions mMarkerOptionsA;
+    private Marker destinationMarkerA;
+    private MarkerOptions mMarkerOptionsB;
+    private Marker destinationMarkerB;
+
+    //Views + Activities
+    TextView durationView;
+    TextView distanceView;
+    GoogleMapsData googleMapsData = new GoogleMapsData();
+    String mode = "walking";
+    ElevationDataModel elevationDataModel;
+    ArrayList<ElevationData> elevationArrayList = new ArrayList<>();
+    ElevationGraphActivity elevationGraphActivity = new ElevationGraphActivity();
+    ArrayList<Polyline> polylines= new ArrayList<>();
+    int samplerate = 100;
 
 
     //Widget
     private AutoCompleteTextView editTextSearch;
+    private AutoCompleteTextView editTextSearch2;
     private ImageView mGps;
     private ImageView mplacePicker;
     private ImageView mInfo;
     private ImageView mDistance;
+    private ImageView travelMode;
 
 
-
+//endregion variables
 
 
 
@@ -137,20 +172,32 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         setContentView(R.layout.activity_google_maps);
 
 
+        preferences = getSharedPreferences("maptype",MODE_PRIVATE);
+        editor = preferences.edit();
+
+
+        //init view-components
+        distanceView = (TextView) findViewById(R.id.distanceBetweenAB);
+        durationView = (TextView) findViewById(R.id.PeriodBetweenAB);
+        calcDuration = (Button)findViewById(R.id.findpath);
+        calcHeight = (Button)findViewById(R.id.hightprofile);
         mDistance = (ImageView) findViewById(R.id.distance);
         mInfo = (ImageView) findViewById(R.id.place_info);
         mplacePicker = (ImageView) findViewById(R.id.placePicker);
         editTextSearch = (AutoCompleteTextView) findViewById(R.id.mapSearchText);
+        editTextSearch2 = (AutoCompleteTextView)findViewById(R.id.mapSearchText2);
         mGps = (ImageView)findViewById(R.id.ic_gps);
         mGps.bringToFront();
 
+        travelMode = (ImageView)findViewById(R.id.travelmodeView);
         mGps.setClickable(true);
         mGeoDataClient = Places.getGeoDataClient(this, null);
 
         checkPermission();
 
-    }
 
+
+    }
 
 
 
@@ -162,6 +209,109 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         placeAutocompleteAdapter = new PlaceAutocompleteAdapter(this, mGeoDataClient ,LAT_LNG_BOUNDS,null);
         mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(Places.GEO_DATA_API).addApi(Places.PLACE_DETECTION_API).enableAutoManage(this,this).build();
         editTextSearch.setAdapter(placeAutocompleteAdapter);
+        editTextSearch2.setAdapter(placeAutocompleteAdapter);
+
+//region view.setOnClickListener
+        calcHeight.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String coord;
+
+
+                if(latitudeDestinationA == null
+                        && longitudeDestinationA == null){
+
+                    Toast.makeText(GoogleMapsActivity.this,"Choose a 'origin' location",Toast.LENGTH_SHORT).show();
+
+                }else if(latitudeDestinationB == null
+                        && longitudeDestinationB == null){
+
+                    Toast.makeText(GoogleMapsActivity.this,"Choose a 'destination' location",Toast.LENGTH_SHORT).show();
+
+                }else if(latitudeDestinationA != null
+                        && longitudeDestinationA != null
+                        && latitudeDestinationB != null
+                        && longitudeDestinationB != null){
+
+                    coord ="path="+latitudeDestinationA +","+longitudeDestinationA+"|"+latitudeDestinationB+","+longitudeDestinationB+"&samples="+samplerate;
+
+                    if(coord == null ||
+                            coord.equals("")){
+                        //Do nothing
+                        Log.d(TAG, "Nothing to do");
+                    }else{
+
+                        loadElevationData(coord);
+
+                    }
+                }
+            }
+        });
+
+        calcDuration.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+
+                String coord;
+                if(polylines != null){
+                    for(Polyline line : polylines)
+                    {
+                        line.remove();
+                    }
+
+                }
+
+                if(latitudeDestinationA == null
+                        && longitudeDestinationA == null){
+
+                    Toast.makeText(GoogleMapsActivity.this,"Choose a 'origin' location",Toast.LENGTH_SHORT).show();
+
+                }else if(latitudeDestinationB == null
+                        && longitudeDestinationB == null){
+
+                    Toast.makeText(GoogleMapsActivity.this,"Choose a 'destination' location",Toast.LENGTH_SHORT).show();
+
+                }else if(latitudeDestinationA != null
+                        && longitudeDestinationA != null
+                        && latitudeDestinationB != null
+                        && longitudeDestinationB != null){
+
+                    coord ="&mode="+mode+ "&origin="+latitudeDestinationA +","+longitudeDestinationA+"&destination="+latitudeDestinationB+","+longitudeDestinationB;
+
+                    if(coord == null ||
+                            coord.equals("")){
+
+                    }else{
+                        loadGoogleMapsdata(coord);
+
+                    }
+
+
+                }
+            }
+        });
+
+
+
+        editTextSearch2.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int EditorActionID, KeyEvent keyEvent) {
+                if(EditorActionID == EditorInfo.IME_ACTION_SEARCH
+                        || EditorActionID == EditorInfo.IME_ACTION_DONE
+                        ||keyEvent.getAction() == KeyEvent.ACTION_DOWN
+                        ||keyEvent.getAction() == KeyEvent.KEYCODE_ENTER
+                        ){
+
+                    geoLocate2();
+
+                }
+
+                return false;
+
+            }
+
+        });
 
         editTextSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -182,12 +332,42 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
         });
 
+        travelMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PopupMenu popupMenuTravelMode = new PopupMenu(GoogleMapsActivity.this, travelMode);
+                popupMenuTravelMode.getMenuInflater().inflate(R.menu.travelmode_menu, popupMenuTravelMode.getMenu());
+
+                popupMenuTravelMode.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+
+                        switch(item.getItemId()){
+                            case R.id.modeWalking:
+                                mode = "walking";
+                                return true;
+                            case R.id.modeBicycling:
+                                mode = "bicycling";
+                                return true;
+                            case R.id.modeDriving:
+                                mode = "driving";
+                                return true;
+                        }
+                        return true;
+                    }
+                });
+                popupMenuTravelMode.show();
+
+            }
+        });
+
         mGps.setOnClickListener(new View.OnClickListener() {
            @Override
            public void onClick(View view) {
                getLocation();
            }
         });
+
         mplacePicker.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -203,6 +383,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
             }
         });
+
         mInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -237,24 +418,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng point) {
-/*
-                if(inputState == true){
-                    if(destinationMarker != null){
-                        destinationMarker.remove();
-                    }
 
-                    if(end_longitude != 0 && end_longitude != 0){
-
-
-                    latLngdestination = new LatLng(end_latitude,end_longitude);
-                    markerOptionsDestination.position(latLngdestination);
-                    markerOptionsDestination.title("Selected destination");
-                    destinationMarker = mMap.addMarker(markerOptionsDestination);
-                    inputState = false;
-                    }
-                }
-
-*/
 
                 if(markerOptionsDestination != null){
                     destinationMarker.remove();
@@ -267,7 +431,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
                 destinationMarker = mMap.addMarker(markerOptionsDestination);
             }
         });
-
+//endregion view.setOnClickListener
 
         hideKeyboard();
     }
@@ -294,8 +458,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         if (requestCode == PLACE_PICKER_REQUEST) {
             if (resultCode == RESULT_OK) {
                 Place place = PlacePicker.getPlace(this, data);
-                //String toastMsg = String.format("Place: %s", place.getName());
-                //Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
+
                 PendingResult<PlaceBuffer> pendingResult = Places.GeoDataApi.getPlaceById(mGoogleApiClient,place.getId());
                 pendingResult.setResultCallback(UpdatePlaceDetailsCallback);
 
@@ -304,6 +467,8 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         }
     }
 
+
+    //No more used (maybe for different purpose)
     private void Destination(){
         mMap.clear();
         MarkerOptions markerOptions = new MarkerOptions();
@@ -320,8 +485,117 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+
     }
 
+//region async-tasks
+//Async-Task load directions data (distance + duration)
+    public void loadGoogleMapsdata(String coord){
+        GoogleMapsDirectionsTask googleMapsDirectionsTask = new GoogleMapsDirectionsTask();
+        googleMapsDirectionsTask.execute(new String[]{coord});
+    }
+
+    public void loadElevationData(String coord){
+        GoogleMapsElevationTask googleMapsElevationTask = new GoogleMapsElevationTask();
+        googleMapsElevationTask.execute(new String[]{coord});
+    }
+
+    private class GoogleMapsElevationTask extends AsyncTask<String, Void, ElevationDataModel>{
+
+        @Override
+        protected ElevationDataModel doInBackground(String... strings) {
+            String data = new GoogleMapsHttpClient().getElevationData(strings[0]);
+            if(data != null){
+
+                elevationDataModel = GoogleMapsDataParser.getElevationData(data);
+
+            }
+            return elevationDataModel;
+        }
+
+        @Override
+        protected void onPostExecute(ElevationDataModel elevationDataModel) {
+            super.onPostExecute(elevationDataModel);
+            if(elevationDataModel != null) {
+                elevationArrayList= elevationDataModel.getElevationDataList();
+
+
+                elevationGraphActivity.setElevationDataArrayList(elevationArrayList);
+
+
+                Intent intent = new Intent(GoogleMapsActivity.this, ElevationGraphActivity.class);
+                for(int i = 0; i< elevationArrayList.size();i++){
+                    ElevationData elevationData = elevationArrayList.get(i);
+                    double elevation = elevationData.getElevation();
+                    intent.putExtra("data"+i,elevation);
+                    intent.putExtra("samplerate",samplerate);
+                }
+
+                startActivity(intent);
+
+
+
+
+            }
+
+        }
+
+    }
+
+
+
+
+
+    private class GoogleMapsDirectionsTask extends AsyncTask<String, Void, GoogleMapsData>{
+
+        @Override
+        protected GoogleMapsData doInBackground(String... strings) {
+            String data = new GoogleMapsHttpClient().getDirectionsData(strings[0]);
+
+            if(data != null){
+                googleMapsData = GoogleMapsDataParser.getMapsData(data);
+            }
+            return googleMapsData;
+        }
+
+        @Override
+        protected void onPostExecute(GoogleMapsData googleMapsData) {
+            super.onPostExecute(googleMapsData);
+            String[] directionsList;
+            if(googleMapsData != null){
+                String duration = googleMapsData.getDuration();
+                String distance = googleMapsData.getDistance();
+                directionsList = googleMapsData.getPaths();
+                displayDirection(directionsList);
+                durationView.setText(duration);
+                distanceView.setText(distance);
+            }
+        }
+    }
+
+//endregion async-tasks
+
+
+    public void displayDirection(String[] directionsList){
+
+        Polyline polyline;
+        int count = directionsList.length;
+        for(int i = 0; i<count; i++){
+
+            PolylineOptions polylineOptions = new PolylineOptions();
+            polylineOptions.color(Color.RED);
+            polylineOptions.width(10);
+            polylineOptions.addAll(PolyUtil.decode(directionsList[i]));
+
+            polyline = mMap.addPolyline(polylineOptions);
+            polylines.add(polyline);
+        }
+    }
+
+
+
+
+//region geolocate
 //"Addresse" eingeben und dieser auf der Karte anzeigen
     private void geoLocate(){
         Log.d(TAG, "geoLocate()");
@@ -344,6 +618,18 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
 
             try{
+                if(mMarkerOptionsA != null){
+                    destinationMarkerA.remove();
+
+                }
+
+
+                latitudeDestinationA = address.getLatitude();
+                longitudeDestinationA = address.getLongitude();
+                mMarkerOptionsA = new MarkerOptions().position(new LatLng(address.getLatitude(),address.getLongitude()));
+                mMarkerOptionsA.title("Origin");
+                destinationMarkerA = mMap.addMarker(mMarkerOptionsA);
+
                 moveCamera(new LatLng(address.getLatitude(),address.getLongitude()),DEFAULT_ZOOM,address.getAddressLine(0));
             }catch (NullPointerException e){
                 Log.e(TAG, "onComplete: NullPointerException: " +e.getMessage() );
@@ -351,6 +637,53 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
         }
     }
+
+    private void geoLocate2(){
+        Log.d(TAG, "geoLocate()");
+
+        String searchString = editTextSearch2.getText().toString();
+
+        Geocoder geocoder = new Geocoder(GoogleMapsActivity.this);
+        List<Address> addresses = new ArrayList<>();
+
+        try{
+            addresses = geocoder.getFromLocationName(searchString, 1);
+        }catch (IOException e){
+            Log.e(TAG, "geoLocate(): IOException: " + e.getMessage());
+        }
+
+        if(addresses.size() > 0){
+            Address address = addresses.get(0);
+            Toast.makeText(this, addresses.get(0).toString(),Toast.LENGTH_SHORT);
+            Log.d(TAG,"geoLocate" + address.toString());
+
+
+            try{
+
+                if(mMarkerOptionsB != null){
+                    destinationMarkerB.remove();
+
+                }
+
+
+                latitudeDestinationB = address.getLatitude();
+                longitudeDestinationB = address.getLongitude();
+                mMarkerOptionsB = new MarkerOptions().position(new LatLng(address.getLatitude(),address.getLongitude()));
+                mMarkerOptionsB.title("Destination");
+                destinationMarkerB = mMap.addMarker(mMarkerOptionsB);
+
+
+
+                moveCamera(new LatLng(address.getLatitude(),address.getLongitude()),DEFAULT_ZOOM,address.getAddressLine(0));
+            }catch (NullPointerException e){
+                Log.e(TAG, "onComplete: NullPointerException: " +e.getMessage() );
+            }
+
+        }
+    }
+
+
+
 
 //Aktuelle Position auf der Karte finden => beim start der App
     public void getLocation() {
@@ -401,16 +734,20 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         }
 
     }
+    //endregion geolocate
 
+
+//region camera-navigation
     //Camera "Map-Position" je nach "Event", verändern. (Start der App, Suche nach einer "Addresse")
     private void moveCamera(LatLng latLng, float zoom, String title) {
         Log.d(TAG, "moveCamera: moving camera to: lat: " + latLng.latitude + "; lng: " + latLng.longitude);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-
+/*
         if(!title.equals("Current Place")){
             MarkerOptions markerOptions = new MarkerOptions().position(latLng).title(title);
             mMap.addMarker(markerOptions);
         }
+        */
 
     }
 
@@ -426,8 +763,9 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
             try{
                 String snippet = "Address: " + placeInfo.getAddress() + "\n" +
                         "Phone Number: " + placeInfo.getPhoneNumber() + "\n" +
-                        "Website: " + placeInfo.getWebsiteUri() + "\n" +
-                        "Price Rating: " + placeInfo.getRating() + "\n";
+                        "Website: " + placeInfo.getWebsiteUri() + "\n";
+
+
 
                 MarkerOptions options = new MarkerOptions()
                         .position(latLng)
@@ -444,14 +782,18 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
         hideKeyboard();
     }
+    //endregion camera-navigation
 
-    //Verstecken des SoftKeyboards nach der eingabe einer Addresse
+    //Verstecken des SoftKeyboards nach der Eingabe einer Addresse (funktioniert derzeit nichtmehr ?!?)
     private void hideKeyboard(){
 
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(editTextSearch.getWindowToken(), 0);
+        imm.hideSoftInputFromWindow(editTextSearch2.getWindowToken(), 0);
     }
 
+
+//region map-creation
     //User nach Berächtigung abfragen => darf die App auf den Standort des Users zugreifen, etc.?
     private void checkPermission() {
         Log.d(TAG, "checkPermission: checking location Permission");
@@ -503,7 +845,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         supportMapFragment.getMapAsync(GoogleMapsActivity.this);
     }
 
-    //Erstellen der Map
+    //Erstellen der Map+Layout
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
@@ -524,9 +866,11 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
                 return;
             }
             mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setCompassEnabled(false);
+            mMap.getUiSettings().setZoomControlsEnabled(true);
+            mMap.getUiSettings().setMapToolbarEnabled(false);
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
-            //mMap.setOnMarkerDragListener(this);
-            //mMap.setOnMarkerClickListener(this);
+
 
             initialize();
 
@@ -547,6 +891,23 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
             startActivity(switchActivityToSettings);
 
             //showStylesDialog();
+        }else if(item.getItemId() == R.id.samplerate_setting){
+
+            final EditText editText;
+            AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+            alertDialog.setTitle("Change Samplerate");
+            editText = new EditText(this);
+            alertDialog.setView(editText);
+
+            alertDialog.setMessage("Enter value between 2-500");
+            alertDialog.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    samplerate = Integer.parseInt(editText.getText().toString());
+                }
+            });
+            Dialog dialog = alertDialog.create();
+            dialog.show();
         }
         return true;
     }
@@ -556,12 +917,13 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
     private void setSelectedStyle() {
         Bundle bundle = getIntent().getExtras();
 
-
-
         if(bundle != null){
 
             layoutStyle = bundle.getString("STYLEVALUE");
 
+            editor.putString("maptype",layoutStyle);
+            editor.commit();
+            layoutStyle = preferences.getString("maptype","");
         MapStyleOptions style;
         switch (layoutStyle) {
             case "Retro":
@@ -583,8 +945,35 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         }
         mMap.setMapStyle(style);
 
+    }else{
+            layoutStyle = preferences.getString("maptype","");
+            MapStyleOptions style;
+            switch (layoutStyle) {
+                case "Retro":
+
+                    //Layout der Map basierend auf ein JSON-File
+                    style = MapStyleOptions.loadRawResourceStyle(this, R.raw.mapstyle_retro);
+                    break;
+                case "Night":
+
+                    //Layout der Map basierend auf ein JSON-File
+                    style = MapStyleOptions.loadRawResourceStyle(this, R.raw.mapstyle_night);
+                    break;
+                case "Default":
+
+                    style = null;
+                    break;
+                default:
+                    return;
+            }
+            mMap.setMapStyle(style);
+        }
     }
-    }
+
+    //endregion map-creation
+
+
+//region nearby-places
 //Plätze in der Umgebung
     private AdapterView.OnItemClickListener AutocompleteClickListener = new AdapterView.OnItemClickListener(){
 
@@ -633,6 +1022,11 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         }
     };
 
+//endregion nearby-places
+
+
+//region marker-events
+
     @Override
     public boolean onMarkerClick(Marker marker) {
         currentLocationMarker.setDraggable(true);
@@ -655,4 +1049,6 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         end_latitude = currentLocationMarker.getPosition().latitude;
         end_longitude = currentLocationMarker.getPosition().longitude;
     }
+
+    //endregion marker-events
 }

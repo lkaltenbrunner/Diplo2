@@ -57,7 +57,6 @@ public class NotificationFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater,@Nullable ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-
         View layout = inflater.inflate(R.layout.fragment_notification,container,false);
         //RecyclerView recyclerView = (RecyclerView) layout.findViewById(R.id.weatherrecylcerview);
         mRecyclerView = (RecyclerView) layout.findViewById(R.id.weatherrecylcerview);
@@ -70,7 +69,8 @@ public class NotificationFragment extends Fragment {
         mAdapter.setOnItemClickListener(new WeatherAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                saveData();
+
+
                 coord = "lat=" +weatherItemsList.get(position).getLatitute()+ "&lon="+weatherItemsList.get(position).getLongitude();
 
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences(WeatherActivity.SHARED_PREFS, Context.MODE_PRIVATE);
@@ -87,15 +87,15 @@ public class NotificationFragment extends Fragment {
 
                 getActivity().overridePendingTransition(0, 0);
                 startActivity(intent);
+
             }
 
             @Override
             public void onDeleteViewClicked(int position) {
+
                 weatherItemsList.remove(position);
-                saveData();
                 setWeatherItemsList(weatherItemsList);
                 mAdapter.notifyItemRemoved(position);
-
 
             }
         });
@@ -117,18 +117,18 @@ public class NotificationFragment extends Fragment {
     }
 
     private void saveData(){
-        SharedPreferences sharedPreferencesSaveArray = getActivity().getSharedPreferences("ArrayData",Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferencesSaveArray = getActivity().getSharedPreferences("ArrayDataCurrentWeather",Context.MODE_PRIVATE);
         SharedPreferences.Editor editorSaveArray = sharedPreferencesSaveArray.edit();
         Gson gson = new Gson();
         String json = gson.toJson(weatherItemsList);
-        editorSaveArray.putString("ArrayData",json);
+        editorSaveArray.putString("ArrayDataCurrentWeather",json);
         editorSaveArray.apply();
     }
 
     private void loadData(){
-        SharedPreferences sharedPreferencesSaveArray = getActivity().getSharedPreferences("ArrayData",Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferencesSaveArray = getActivity().getSharedPreferences("ArrayDataCurrentWeather",Context.MODE_PRIVATE);
         Gson gson = new Gson();
-        String json = sharedPreferencesSaveArray.getString("ArrayData","");
+        String json = sharedPreferencesSaveArray.getString("ArrayDataCurrentWeather","");
         Type type = new TypeToken<ArrayList<WeatherItem>>(){}.getType();
         weatherItemsList = gson.fromJson(json,type);
 

@@ -25,7 +25,7 @@ public class ForecastFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private ForecastAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
-    String coord;
+
 
     public ArrayList<WeatherForecast> getWeatherForecastArrayList() {
         return weatherForecastArrayList;

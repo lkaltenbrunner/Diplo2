@@ -10,11 +10,9 @@
          location permissions for the 'MyLocation' functionality. 
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-
-
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <application
         android:allowBackup="true"
@@ -23,7 +21,8 @@
         android:theme="@style/AppTheme">
 
         <!-- Main Activity -->
-        <activity android:name=".MainActivity"
+        <activity
+            android:name=".MainActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,25 +31,26 @@
             </intent-filter>
         </activity>
         <!-- Settings Activity -->
+
         <activity
             android:name=".SettingsActivity"
             android:label="@string/Settings_Application_Name"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <!-- Profile Activity -->
         <activity
             android:name=".ProfileActivity"
             android:label="@string/Profile_Application_Name"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <!-- GoogleMaps Activity -->
         <activity
             android:name=".GoogleMapsActivity"
             android:label="@string/GoogleMaps_Application_Name"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <!-- Weather Activity -->
         <activity
             android:name=".WeatherActivity"
             android:label="@string/Weather_Application_Name"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -66,6 +66,10 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
+        <activity android:name=".ElevationGraphActivity"
+            android:label="Height Graph"
+            android:theme="@style/AppTheme.CustomTheme"
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>

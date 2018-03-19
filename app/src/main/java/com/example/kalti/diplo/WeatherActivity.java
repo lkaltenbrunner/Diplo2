@@ -33,6 +33,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.kalti.diplo.GoogleMaps_Classes.GoogleMapsData;
 import com.example.kalti.diplo.Model_Classes.Forecast.JSONWeatherForecastParser;
 import com.example.kalti.diplo.Model_Classes.Forecast.WeatherForecastHttpClient;
 import com.example.kalti.diplo.Model_Classes.JSONWeatherParser;
@@ -56,6 +57,7 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 
 public class WeatherActivity extends AppCompatActivity implements LocationListener{
 
@@ -89,6 +91,8 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
     private ArrayList<WeatherItem> weatherItemArrayList;
     private ArrayList<String> cityList;
     SharedPreferences sharedPreferences;
+    String unknownplace = "";
+
 
 
 
@@ -364,7 +368,9 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
             super.onPostExecute(bitmap);
             if(internet_connection_status()) {
                 if(bitmap != null){
+                    /*
                     ((ImageView) weatherFragment.getView().findViewById(R.id.weathericon)).setImageBitmap(bitmap);
+                    */
                 }
 
                 //weatherimg.setImageBitmap(bitmap);
@@ -435,7 +441,7 @@ private class WeatherForecastTask extends AsyncTask<String, Void, ForecastWeathe
 
             long dvupdate = Long.valueOf(weather.place.getLastupdate())*1000;
             Date dfupdate = new java.util.Date(dvupdate);
-            String updateValue = new SimpleDateFormat("EEEE dd/MM/yyyy ; HH:mm").format(dfupdate);
+            String updateValue = new SimpleDateFormat("EEEE dd/MM/yyyy  HH:mm",Locale.ENGLISH).format(dfupdate);
 
 
             float windspeed = (float) (weather.wind.getSpeed() * 1.61);
@@ -445,26 +451,29 @@ private class WeatherForecastTask extends AsyncTask<String, Void, ForecastWeathe
             String sunsetValue = new SimpleDateFormat("HH:mm").format(dfsunset);
 
 
+
             String tempFormat = decimalFormat.format(weather.currentCondition.getTemperature());
             double loncurrent = weather.place.getLon();
             double latcurrent = weather.place.getLat();;
 
             weather.iconData = weather.currentCondition.getIcon();
-            if (internet_connection_status()) {
+           /* if (internet_connection_status()) {
                 loadImage(weather.iconData);
             } else {
                 internetConnectionBuilder(WeatherActivity.this).show();
             }
+*/
+
 
 
             ((TextView) weatherFragment.getView().findViewById(R.id.placeTextView)).setText(weather.place.getCity() + "," + weather.place.getCountry());
             ((TextView) weatherFragment.getView().findViewById(R.id.tempTextView)).setText(tempFormat + "°C");
-            ((TextView) weatherFragment.getView().findViewById(R.id.cloudTextView)).setText("Condition: " + weather.currentCondition.getCondition());
-            ((TextView) weatherFragment.getView().findViewById(R.id.pressureTextView)).setText("Pressure: " + weather.currentCondition.getPressure() + "hPa");
-            ((TextView) weatherFragment.getView().findViewById(R.id.windTextView)).setText("Wind: " + windspeed + " km/h");
-            ((TextView) weatherFragment.getView().findViewById(R.id.humidityTextView)).setText("Humidity: " + weather.currentCondition.getHumidity() + "%");
-            ((TextView) weatherFragment.getView().findViewById(R.id.sunriseTextView)).setText("Sunrise : " + sunriseValue);
-            ((TextView) weatherFragment.getView().findViewById(R.id.sunsetTextView)).setText("Sunset: " + sunsetValue);
+            ((TextView) weatherFragment.getView().findViewById(R.id.cloudTextView)).setText(weather.currentCondition.getCondition());
+            ((TextView) weatherFragment.getView().findViewById(R.id.pressureTextView)).setText(weather.currentCondition.getPressure() + "hPa");
+            ((TextView) weatherFragment.getView().findViewById(R.id.windTextView)).setText(windspeed + " km/h");
+            ((TextView) weatherFragment.getView().findViewById(R.id.humidityTextView)).setText(weather.currentCondition.getHumidity() + "%");
+            ((TextView) weatherFragment.getView().findViewById(R.id.sunriseTextView)).setText(sunriseValue);
+            ((TextView) weatherFragment.getView().findViewById(R.id.sunsetTextView)).setText(sunsetValue);
             ((TextView)weatherFragment.getView().findViewById(R.id.lastupdateView)).setText("Last update: "+ updateValue);
 
             String city = weather.place.getCity();
@@ -524,7 +533,7 @@ private class WeatherForecastTask extends AsyncTask<String, Void, ForecastWeathe
 
     public void showInputDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(WeatherActivity.this);
-        builder.setTitle("Change city");
+        builder.setTitle("Add Locationname");
 
         final EditText cInput = new EditText(WeatherActivity.this);
         cInput.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -536,21 +545,7 @@ private class WeatherForecastTask extends AsyncTask<String, Void, ForecastWeathe
 
 
                 if(i != -1 || !cInput.getText().toString().matches("")){
-                    SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS,MODE_PRIVATE);
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString("city",cInput.getText().toString());
-                    editor.commit();
-
-
-                    String nCity = sharedPreferences.getString("city",cInput.getText().toString());
-                    SHARED_VALUE = nCity.toString();
-
-
-                    if(internet_connection_status()) {
-                        loadWeatherData(nCity);
-                    }else{
-                        internetConnectionBuilder(WeatherActivity.this).show();
-                    }
+                    unknownplace = cInput.getText().toString();
                 }
 
 

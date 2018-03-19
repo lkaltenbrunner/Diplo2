@@ -1,5 +1,11 @@
 package com.example.kalti.diplo.Model_Classes;
 
+import android.content.DialogInterface;
+import android.support.v7.app.AlertDialog;
+import android.text.InputType;
+import android.widget.EditText;
+
+import com.example.kalti.diplo.WeatherActivity;
 import com.example.kalti.diplo.Weather_Models.Place;
 import com.example.kalti.diplo.Weather_Models.Weather;
 
@@ -183,4 +189,6 @@ public class JSONWeatherParser {
         }
         return null;
     }
+
+
 }
