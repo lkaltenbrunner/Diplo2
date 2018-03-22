@@ -252,7 +252,6 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
             @Override
             public void onClick(View view) {
 
-
                 String coord;
                 if(polylines != null){
                     for(Polyline line : polylines)
@@ -262,32 +261,23 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
 
                 }
 
-                if(latitudeDestinationA == null
-                        && longitudeDestinationA == null){
+                if(latitudeDestinationA == null && longitudeDestinationA == null){
 
                     Toast.makeText(GoogleMapsActivity.this,"Choose a 'origin' location",Toast.LENGTH_SHORT).show();
 
-                }else if(latitudeDestinationB == null
-                        && longitudeDestinationB == null){
+                }else if(latitudeDestinationB == null && longitudeDestinationB == null){
 
                     Toast.makeText(GoogleMapsActivity.this,"Choose a 'destination' location",Toast.LENGTH_SHORT).show();
 
-                }else if(latitudeDestinationA != null
-                        && longitudeDestinationA != null
-                        && latitudeDestinationB != null
-                        && longitudeDestinationB != null){
+                }else if(latitudeDestinationA != null && longitudeDestinationA != null && latitudeDestinationB != null && longitudeDestinationB != null){
 
                     coord ="&mode="+mode+ "&origin="+latitudeDestinationA +","+longitudeDestinationA+"&destination="+latitudeDestinationB+","+longitudeDestinationB;
 
                     if(coord == null ||
                             coord.equals("")){
-
                     }else{
                         loadGoogleMapsdata(coord);
-
                     }
-
-
                 }
             }
         });
@@ -708,19 +698,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
                         try{
                             latitude = clocation.getLatitude();
                             longitude = clocation.getLongitude();
-                            /*
-                            LatLng latlngclocation = new LatLng(clocation.getLatitude(), clocation.getLongitude());
-                            MarkerOptions markerOptions = new MarkerOptions();
-                            markerOptions.position(latlngclocation);
-                            markerOptions.title("Current Place");
-                            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                            currentLocationMarker = mMap.addMarker(markerOptions);
-                            */
                             moveCamera(new LatLng(clocation.getLatitude(), clocation.getLongitude()), DEFAULT_ZOOM, "Current Place");
-
-
-
-
                         }catch (NullPointerException e){
                             Log.e(TAG, "onComplete: NullPointerException: " +e.getMessage() );
                         }
@@ -853,8 +831,6 @@ public class GoogleMapsActivity extends AppCompatActivity implements OnMapReadyC
         Log.d(TAG, "onMapReady: map is ready");
         mMap = googleMap;
         setSelectedStyle();
-
-
 
 
         if (mLocationPermissionsGranted) {
